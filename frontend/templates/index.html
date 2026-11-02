@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CyberTrace — Digital Forensics & Investigation Workstation</title>
+    <style>
+        :root {
+            --bg-base: #0b0f19;
+            --bg-surface: #111827;
+            --bg-elevated: #1f2937;
+            --border: #374151;
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --accent: #38bdf8;
+            --accent-hover: #0284c7;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --critical: #dc2626;
+            --code-font: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: var(--bg-base);
+            color: var(--text-main);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Sidebar */
+        aside {
+            width: 260px;
+            background: var(--bg-surface);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+        }
+        .brand {
+            padding: 20px;
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--accent);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .nav-links {
+            list-style: none;
+            padding: 15px 0;
+            flex: 1;
+        }
+        .nav-links li a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 20px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .nav-links li a:hover, .nav-links li a.active {
+            color: #fff;
+            background: var(--bg-elevated);
+            border-left: 3px solid var(--accent);
+        }
+
+        /* Main Workspace */
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+        header {
+            height: 60px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 30px;
+            background: var(--bg-surface);
+        }
+        .status-pill {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--success);
+            padding: 4px 12px;
+            border-radius: 9999px;
+            font-weight: 600;
+        }
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--success);
+        }
+
+        .content {
+            padding: 30px;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* Stat Grid */
+        .grid-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            padding: 20px;
+            border-radius: 8px;
+        }
+        .stat-card .label { font-size: 13px; color: var(--text-muted); }
+        .stat-card .val { font-size: 28px; font-weight: 700; color: #fff; margin-top: 6px; }
+
+        /* Panels */
+        .card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .card-header h2 { font-size: 18px; font-weight: 600; }
+
+        /* Button styles */
+        .btn {
+            background: var(--accent);
+            color: #0b0f19;
+            border: none;
+            padding: 8px 16px;
+            font-size: 13px;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn:hover { background: var(--accent-hover); }
+        .btn-outline {
+            background: transparent;
+            color: var(--text-main);
+            border: 1px solid var(--border);
+        }
+        .btn-outline:hover { background: var(--bg-elevated); }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        th, td {
+            text-align: left;
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--border);
+        }
+        th {
+            color: var(--text-muted);
+            font-weight: 600;
+            background: var(--bg-elevated);
+        }
+        .code {
+            font-family: var(--code-font);
+            color: var(--accent);
+        }
+
+        .badge {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .badge-CRITICAL { background: rgba(220, 38, 38, 0.2); color: #f87171; }
+        .badge-HIGH { background: rgba(239, 68, 68, 0.2); color: #fca5a5; }
+        .badge-MEDIUM { background: rgba(245, 158, 11, 0.2); color: #fde047; }
+        .badge-LOW { background: rgba(56, 189, 248, 0.2); color: #7dd3fc; }
+        .badge-INFO { background: rgba(156, 163, 175, 0.2); color: #d1d5db; }
+        .badge-VERIFIED { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+
+        .form-row {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        input, select, textarea {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            color: #fff;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+        input:focus { outline: 1px solid var(--accent); }
+    </style>
+</head>
+<body>
+    <aside>
+        <div class="brand">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+            CyberTrace
+        </div>
+        <ul class="nav-links">
+            <li><a href="#" class="active" onclick="showView('overview')">Overview</a></li>
+            <li><a href="#" onclick="showView('cases')">Investigations</a></li>
+            <li><a href="#" onclick="showView('evidence')">Evidence Store</a></li>
+            <li><a href="#" onclick="showView('timeline')">Timeline Reconstruction</a></li>
+            <li><a href="#" onclick="showView('correlations')">Evidence Correlation</a></li>
+            <li><a href="/docs" target="_blank">REST API Docs</a></li>
+        </ul>
+    </aside>
+
+    <main>
+        <header>
+            <div style="font-weight: 600; font-size: 15px;" id="header-title">Forensic Workstation Overview</div>
+            <div class="status-pill">
+                <span class="status-dot"></span>
+                CORE LOCAL ENGINE ONLINE
+            </div>
+        </header>
+
+        <div class="content">
+            <!-- Stats -->
+            <div class="grid-stats">
+                <div class="stat-card">
+                    <div class="label">Total Investigations</div>
+                    <div class="val" id="stat-cases">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">Acquired Evidence Items</div>
+                    <div class="val" id="stat-evidence">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">Verified Findings</div>
+                    <div class="val" id="stat-findings">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">Correlations Discovered</div>
+                    <div class="val" id="stat-correlations">0</div>
+                </div>
+            </div>
+
+            <!-- View: Overview / Cases List -->
+            <div id="view-cases" class="card">
+                <div class="card-header">
+                    <h2>Active Investigation Cases</h2>
+                    <button class="btn" onclick="openCreateCaseModal()">+ New Investigation</button>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Case ID</th>
+                            <th>Title</th>
+                            <th>Investigator</th>
+                            <th>Status</th>
+                            <th>Created</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cases-table-body">
+                        <tr><td colspan="6" style="text-align: center; color: var(--text-muted);">Loading investigations...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Detail Section -->
+            <div id="case-detail-card" class="card" style="display: none;">
+                <div class="card-header">
+                    <h2 id="active-case-title">Case Detail</h2>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="btn btn-outline" onclick="triggerAnalyze()">Analyze Case</button>
+                        <button class="btn btn-outline" onclick="triggerVerify()">Verify Integrity</button>
+                        <button class="btn" onclick="downloadReport('html')">Export HTML Report</button>
+                    </div>
+                </div>
+                <div id="case-detail-content"></div>
+
+                <h3 style="margin: 24px 0 12px 0;">Acquired Evidence Files</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Evidence ID</th>
+                            <th>File Name</th>
+                            <th>Size</th>
+                            <th>Detected Format</th>
+                            <th>SHA-256</th>
+                            <th>Integrity</th>
+                        </tr>
+                    </thead>
+                    <tbody id="case-evidence-body"></tbody>
+                </table>
+
+                <h3 style="margin: 24px 0 12px 0;">Forensic Findings</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Severity</th>
+                            <th>Finding Title</th>
+                            <th>Technical Source</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody id="case-findings-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let currentCaseId = null;
+
+        async function loadStatus() {
+            try {
+                const res = await fetch('/api/status');
+                const data = await res.json();
+                document.getElementById('stat-cases').innerText = data.total_cases;
+                document.getElementById('stat-evidence').innerText = data.total_evidence;
+                document.getElementById('stat-findings').innerText = data.total_findings;
+                document.getElementById('stat-correlations').innerText = data.total_correlations;
+            } catch (e) {
+                console.error("Status load failed", e);
+            }
+        }
+
+        async function loadCases() {
+            try {
+                const res = await fetch('/api/cases');
+                const cases = await res.json();
+                const tbody = document.getElementById('cases-table-body');
+                tbody.innerHTML = '';
+
+                if (cases.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color: var(--text-muted);">No cases found. Create one using the button above or the CLI.</td></tr>';
+                    return;
+                }
+
+                cases.forEach(c => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td class="code">${c.id}</td>
+                        <td><strong>${c.title}</strong></td>
+                        <td>${c.investigator}</td>
+                        <td><span class="badge badge-LOW">${c.status}</span></td>
+                        <td>${new Date(c.created_at).toLocaleString()}</td>
+                        <td>
+                            <button class="btn btn-outline" style="padding: 4px 8px; font-size: 11px;" onclick="viewCase('${c.id}')">Open</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (e) {
+                console.error("Case list failed", e);
+            }
+        }
+
+        async function viewCase(caseId) {
+            currentCaseId = caseId;
+            const res = await fetch(`/api/cases/${caseId}`);
+            const data = await res.json();
+
+            document.getElementById('case-detail-card').style.display = 'block';
+            document.getElementById('active-case-title').innerText = `${data.case.title} (${data.case.id})`;
+            document.getElementById('case-detail-content').innerHTML = `
+                <p style="color: var(--text-muted); margin-bottom: 10px;">${data.case.description || 'No description provided.'}</p>
+                <div style="font-size: 13px;">Investigator: <strong>${data.case.investigator}</strong> | Status: <strong>${data.case.status}</strong></div>
+            `;
+
+            // Populate Evidence
+            const evBody = document.getElementById('case-evidence-body');
+            evBody.innerHTML = '';
+            data.evidence.forEach(ev => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="code">${ev.id}</td>
+                    <td>${ev.file_name}</td>
+                    <td>${ev.file_size} B</td>
+                    <td>${ev.file_type || 'Unknown'}</td>
+                    <td class="code" title="${ev.sha256}">${ev.sha256.substring(0, 16)}...</td>
+                    <td><span class="badge badge-VERIFIED">${ev.integrity_status}</span></td>
+                `;
+                evBody.appendChild(tr);
+            });
+
+            // Populate Findings
+            const findBody = document.getElementById('case-findings-body');
+            findBody.innerHTML = '';
+            data.findings.forEach(f => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><span class="badge badge-${f.severity}">${f.severity}</span></td>
+                    <td><strong>${f.title}</strong></td>
+                    <td class="code">${f.source_technical}</td>
+                    <td>${f.description}</td>
+                `;
+                findBody.appendChild(tr);
+            });
+        }
+
+        async function triggerAnalyze() {
+            if (!currentCaseId) return;
+            await fetch(`/api/cases/${currentCaseId}/analyze`, { method: 'POST' });
+            alert("Analysis triggered successfully.");
+            viewCase(currentCaseId);
+            loadStatus();
+        }
+
+        async function triggerVerify() {
+            if (!currentCaseId) return;
+            const res = await fetch(`/api/cases/${currentCaseId}/verify`);
+            const data = await res.json();
+            alert(`Integrity verification completed for ${data.verification_results.length} items.`);
+            viewCase(currentCaseId);
+        }
+
+        function downloadReport(format) {
+            if (!currentCaseId) return;
+            window.open(`/api/cases/${currentCaseId}/report?format=${format}`, '_blank');
+        }
+
+        async function openCreateCaseModal() {
+            const title = prompt("Enter Investigation Case Title:");
+            if (!title) return;
+            const desc = prompt("Enter Description (optional):") || "";
+            const inv = prompt("Enter Lead Investigator Name:") || "Forensic Analyst";
+
+            await fetch('/api/cases', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title, description: desc, investigator: inv })
+            });
+
+            loadCases();
+            loadStatus();
+        }
+
+        loadStatus();
+        loadCases();
+    </script>
+</body>
+</html>
