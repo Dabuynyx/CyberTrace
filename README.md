@@ -69,7 +69,7 @@ CyberTrace operates strictly **local-first** and is independent of paid, cloud-h
 ### Installation
 
 ```bash
-git clone https://github.com/Zaxionyx/CyberTrace.git
+git clone https://github.com/Dabuynyx/CyberTrace.git
 cd CyberTrace
 
 # Create virtual environment
@@ -122,10 +122,14 @@ cybertrace verify CASE-XXXXXXXX
 
 ### Forensic Analysis
 ```bash
+# Direct scanning of standalone file or existing case
+cybertrace scan /path/to/file.bin
+cybertrace scan CASE-XXXXXXXX
+
 # Run all forensic modules across all evidence in a case
 cybertrace analyze case CASE-XXXXXXXX
 
-# Or analyze a standalone file directly:
+# Or analyze a standalone file directly with specific modules:
 cybertrace analyze file /path/to/file.bin
 cybertrace analyze metadata /path/to/image.jpg
 cybertrace analyze malware /path/to/binary.exe

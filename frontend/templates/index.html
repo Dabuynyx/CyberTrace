@@ -326,6 +326,32 @@
                     </thead>
                     <tbody id="case-findings-body"></tbody>
                 </table>
+
+                <h3 style="margin: 24px 0 12px 0;">Evidence Correlations & Linkages</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Source</th>
+                            <th>Target</th>
+                            <th>Relationship Type</th>
+                            <th>Reasoning</th>
+                        </tr>
+                    </thead>
+                    <tbody id="case-correlations-body"></tbody>
+                </table>
+
+                <h3 style="margin: 24px 0 12px 0;">Reconstructed Timeline</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Timestamp (UTC)</th>
+                            <th>Event Type</th>
+                            <th>Source</th>
+                            <th>Summary</th>
+                        </tr>
+                    </thead>
+                    <tbody id="case-timeline-body"></tbody>
+                </table>
             </div>
         </div>
     </main>
@@ -418,6 +444,34 @@
                 `;
                 findBody.appendChild(tr);
             });
+
+            // Populate Correlations
+            const corrBody = document.getElementById('case-correlations-body');
+            corrBody.innerHTML = '';
+            (data.correlations || []).forEach(c => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="code">${c.source_evidence_id}</td>
+                    <td class="code">${c.target_evidence_id}</td>
+                    <td><strong style="color: var(--accent);">${c.relationship_type}</strong></td>
+                    <td>${c.reasoning}</td>
+                `;
+                corrBody.appendChild(tr);
+            });
+
+            // Populate Timeline
+            const timeBody = document.getElementById('case-timeline-body');
+            timeBody.innerHTML = '';
+            (data.timeline || []).forEach(t => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="code">${t.timestamp}</td>
+                    <td><span class="badge badge-LOW">${t.timestamp_type}</span></td>
+                    <td>${t.source_description}</td>
+                    <td>${t.event_summary}</td>
+                `;
+                timeBody.appendChild(tr);
+            });
         }
 
         async function triggerAnalyze() {
@@ -455,6 +509,22 @@
 
             loadCases();
             loadStatus();
+        }
+
+        function showView(viewName) {
+            document.querySelectorAll('.nav-links li a').forEach(a => a.classList.remove('active'));
+            if (event && event.target && event.target.tagName === 'A') {
+                event.target.classList.add('active');
+            }
+            if (viewName === 'overview' || viewName === 'cases') {
+                document.getElementById('view-cases').style.display = 'block';
+                loadCases();
+            } else if (viewName === 'evidence') {
+                document.getElementById('view-cases').style.display = 'block';
+                loadCases();
+            } else {
+                document.getElementById('view-cases').style.display = 'block';
+            }
         }
 
         loadStatus();

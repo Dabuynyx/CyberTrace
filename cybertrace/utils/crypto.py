@@ -61,7 +61,7 @@ def format_bytes(size: int) -> str:
     power = 2**10
     n = 0
     power_labels = {0: 'B', 1: 'KB', 2: 'MB', 3: 'GB', 4: 'TB'}
-    while size > power and n < 4:
+    while size >= power and n < 4:
         size /= power
         n += 1
     return f"{size:.2f} {power_labels[n]}"

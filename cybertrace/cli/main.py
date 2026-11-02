@@ -48,7 +48,7 @@ def init():
 @app.command()
 def version():
     """Display CyberTrace version and system details."""
-    console.print("[bold cyan]CyberTrace[/bold cyan] v0.1.0 — Digital Forensics & Investigation Framework")
+    console.print("[bold cyan]CyberTrace[/bold cyan] v0.1.1 — Digital Forensics & Investigation Framework")
 
 @app.command()
 def status():
@@ -68,6 +68,30 @@ def status():
         console.print(table)
     finally:
         db.close()
+
+# Top-level direct analysis aliases for CLI ergonomics
+@app.command("scan")
+def scan_direct_cmd(
+    target: str = typer.Argument(..., help="Path to file to analyze or Case ID to analyze."),
+    yara_rules: Optional[str] = typer.Option(None, "--yara-rules", "-y", help="Optional path to YARA rules file.")
+):
+    """Scan and analyze a file or case directly (e.g. 'cybertrace scan CASE_ID' or 'cybertrace scan path/to/file')."""
+    if os.path.exists(target):
+        analyze_file_cmd(target)
+    else:
+        init_db()
+        db = SessionLocal()
+        try:
+            mgr = CaseManager(db)
+            mgr.get_case(target)
+            engine = ForensicEngine(db)
+            res = engine.analyze_case(target, yara_rules=yara_rules)
+            console.print(f"[bold green]Case Analysis Complete for {target}.[/bold green] Processed {res['total_evidence_analyzed']} evidence item(s).")
+        except Exception as e:
+            console.print(f"[bold red]Error analyzing '{target}':[/bold red] {e}")
+            raise typer.Exit(code=1)
+        finally:
+            db.close()
 
 # Case Commands
 @case_app.command("create")

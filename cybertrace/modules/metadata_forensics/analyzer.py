@@ -2,6 +2,7 @@
 
 import os
 import json
+import re
 import shutil
 import subprocess
 import time
@@ -47,6 +48,25 @@ class MetadataForensicsModule(BaseForensicModule):
         except Exception:
             pass
         return {}
+
+    def _run_pdf_fallback(self, file_path: str) -> Dict[str, Any]:
+        """Native parser for basic PDF document metadata."""
+        meta: Dict[str, Any] = {}
+        try:
+            with open(file_path, "rb") as f:
+                header = f.read(1024)
+                if not header.startswith(b"%PDF-"):
+                    return meta
+                f.seek(0)
+                content = f.read(2 * 1024 * 1024)
+                matches = re.findall(rb"/([A-Z][a-zA-Z0-9]+)\s*\(([^)]+)\)", content)
+                for key_b, val_b in matches:
+                    k = key_b.decode("utf-8", errors="ignore")
+                    v = val_b.decode("utf-8", errors="ignore")
+                    meta[f"PDF:{k}"] = v
+        except Exception:
+            pass
+        return meta
 
     def _run_pillow_fallback(self, file_path: str) -> Dict[str, Any]:
         """Native Python Pillow fallback for image metadata."""
@@ -98,9 +118,13 @@ class MetadataForensicsModule(BaseForensicModule):
             else:
                 warnings.append("ExifTool returned empty metadata; attempting native fallback.")
                 metadata = self._run_pillow_fallback(target_path)
+                if not metadata:
+                    metadata = self._run_pdf_fallback(target_path)
         else:
             warnings.append("ExifTool is not installed on host. Running native Python fallback parser.")
             metadata = self._run_pillow_fallback(target_path)
+            if not metadata:
+                metadata = self._run_pdf_fallback(target_path)
 
         # Analyze extracted metadata
         # 1. GPS coordinates extraction
